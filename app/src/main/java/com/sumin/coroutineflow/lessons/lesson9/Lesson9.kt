@@ -2,42 +2,33 @@ package com.sumin.coroutineflow.lessons.lesson9
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
-val coroutineScope = CoroutineScope(Dispatchers.IO)
+val coroutineScope = CoroutineScope(Dispatchers.Default)
 
 suspend fun main() {
-    val flow = MutableSharedFlow<Int>()
 
-    coroutineScope.launch {
-        repeat(5) {
-            println("Emitted: $it")
+    val flow = MutableStateFlow<Int>(0)
+
+    val producer = coroutineScope.launch {
+        repeat(10){
+            println("emit: $it")
             flow.emit(it)
+            delay(200)
+        }
+    }
+
+    val consumer = coroutineScope.launch {
+        flow.collectLatest{
+            println("collect: $it")
             delay(1000)
+            println("after collect: $it")
         }
     }
 
-    val job1 = coroutineScope.launch {
-        flow.collect {
-            println("Got form 1st collector: $it")
-        }
-    }
-    delay(5000)
-    val job2 = coroutineScope.launch {
-        flow.collect {
-            println("Got form 2nd collector: $it")
-        }
-    }
-    job1.join()
-    job2.join()
-}
-
-fun getFlow(): Flow<Int> = flow {
-    repeat(5) {
-        println("Emitted: $it")
-        emit(it)
-        delay(1000)
-    }
+    producer.join()
+    consumer.join()
 }
