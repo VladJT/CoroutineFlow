@@ -29,6 +29,13 @@ class CryptoActivity : AppCompatActivity() {
         setContentView(binding.root)
         setupRecyclerView()
         observeViewModel()
+        initButtons()
+    }
+
+    private fun initButtons() {
+        binding.btnReferesh.setOnClickListener {
+            viewModel.refreshList()
+        }
     }
 
     private fun setupRecyclerView() {
@@ -40,19 +47,23 @@ class CryptoActivity : AppCompatActivity() {
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.RESUMED)
             {
-                viewModel.state.collect() {
+                viewModel.state.collect {
                     when (it) {
                         is State.Initial -> {
                             binding.progressBarLoading.isVisible = false
+                            binding.btnReferesh.isEnabled = false
                         }
 
                         is State.Loading -> {
                             binding.progressBarLoading.isVisible = true
+                            binding.btnReferesh.isEnabled = false
                         }
 
                         is State.Content -> {
+                            binding.btnReferesh.isEnabled = true
                             binding.progressBarLoading.isVisible = false
                             adapter.submitList(it.currencyList)
+                            adapter.notifyDataSetChanged()
                         }
                     }
                 }
